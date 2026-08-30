@@ -1,0 +1,31 @@
+# --- Python / backend ---
+venv/
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+backend/.env
+
+# SQLite runtime database (recreate via `alembic upgrade head`)
+*.db
+*.db-journal
+
+# Runtime logs
+*.log
+
+# Large trained model artifact - exceeds GitHub's 100MB limit.
+# Regenerate locally with: python backend/ai/train_eta.py
+backend/ai/models/eta_model.pkl
+
+# --- Node / frontend ---
+node_modules/
+dist/
+build/
+.vite/
+*.local
+
+# --- Editor / OS ---
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
