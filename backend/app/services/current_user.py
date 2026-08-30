@@ -1,5 +1,6 @@
 from fastapi import Depends
 from fastapi import HTTPException
+from fastapi import Request
 
 from sqlalchemy.orm import Session
 
@@ -38,3 +39,25 @@ def get_current_user(
         )
 
     return user
+
+
+def get_current_user_optional(
+    request: Request,
+    db: Session = Depends(get_db),
+):
+
+    auth = request.headers.get("Authorization")
+
+    if not auth or not auth.lower().startswith("bearer "):
+        return None
+
+    payload = decode_access_token(auth.split(" ", 1)[1])
+
+    if payload is None:
+        return None
+
+    return (
+        db.query(User)
+        .filter(User.email == payload["sub"])
+        .first()
+    )

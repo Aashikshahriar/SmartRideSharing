@@ -9,20 +9,28 @@ import {
     Button,
     Alert,
     Link as MuiLink,
+    ToggleButtonGroup,
+    ToggleButton,
 } from "@mui/material";
 
-import { register } from "../services/auth";
+import { register, login } from "../services/auth";
+import { registerDriver } from "../services/drivers";
 
 export default function Register() {
 
     const navigate = useNavigate();
 
+    const [role, setRole] = useState("rider");
+
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
     const [phone, setPhone] = useState("");
     const [password, setPassword] = useState("");
+
+    const [licenseNumber, setLicenseNumber] = useState("");
+    const [nid, setNid] = useState("");
+
     const [error, setError] = useState("");
-    const [success, setSuccess] = useState(false);
     const [loading, setLoading] = useState(false);
 
     async function handleSubmit(e) {
@@ -36,9 +44,22 @@ export default function Register() {
 
             await register({ name, email, phone, password });
 
-            setSuccess(true);
+            await login(email, password);
 
-            setTimeout(() => navigate("/login"), 1200);
+            if (role === "driver") {
+
+                await registerDriver({
+                    license_number: licenseNumber,
+                    nid,
+                });
+
+                navigate("/driver");
+
+            } else {
+
+                navigate("/");
+
+            }
 
         } catch (err) {
 
@@ -71,11 +92,10 @@ export default function Register() {
             <Paper
                 component="form"
                 onSubmit={handleSubmit}
-                elevation={4}
                 sx={{
                     p: 4,
                     width: "100%",
-                    maxWidth: 420,
+                    maxWidth: 440,
                     borderRadius: 3,
                 }}
             >
@@ -94,11 +114,20 @@ export default function Register() {
                     </Alert>
                 )}
 
-                {success && (
-                    <Alert severity="success" sx={{ mb: 2 }}>
-                        Account created! Redirecting to login...
-                    </Alert>
-                )}
+                <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                    I want to
+                </Typography>
+
+                <ToggleButtonGroup
+                    value={role}
+                    exclusive
+                    fullWidth
+                    onChange={(_e, value) => value && setRole(value)}
+                    sx={{ mb: 3 }}
+                >
+                    <ToggleButton value="rider">Book rides</ToggleButton>
+                    <ToggleButton value="driver">Drive &amp; earn</ToggleButton>
+                </ToggleButtonGroup>
 
                 <TextField
                     label="Full Name"
@@ -135,8 +164,34 @@ export default function Register() {
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    sx={{ mb: 3 }}
+                    sx={{ mb: role === "driver" ? 2 : 3 }}
                 />
+
+                {role === "driver" && (
+
+                    <>
+
+                        <TextField
+                            label="Driving License Number"
+                            fullWidth
+                            required
+                            value={licenseNumber}
+                            onChange={(e) => setLicenseNumber(e.target.value)}
+                            sx={{ mb: 2 }}
+                        />
+
+                        <TextField
+                            label="National ID"
+                            fullWidth
+                            required
+                            value={nid}
+                            onChange={(e) => setNid(e.target.value)}
+                            sx={{ mb: 3 }}
+                        />
+
+                    </>
+
+                )}
 
                 <Button
                     type="submit"
@@ -145,7 +200,7 @@ export default function Register() {
                     size="large"
                     disabled={loading}
                 >
-                    {loading ? "Creating account..." : "Register"}
+                    {loading ? "Creating account..." : "Create Account"}
                 </Button>
 
                 <Typography variant="body2" sx={{ mt: 3, textAlign: "center" }}>

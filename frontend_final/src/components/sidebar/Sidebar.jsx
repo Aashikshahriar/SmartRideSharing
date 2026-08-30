@@ -12,10 +12,18 @@ import {
 
 import LocationSearch from "../search/LocationSearch";
 
+const STATUS_COLOR = {
+    REQUESTED: "warning",
+    ACCEPTED: "info",
+    COMPLETED: "success",
+    CANCELLED: "default",
+};
+
 export default function Sidebar({
 
     pickup,
     destination,
+    route,
     eta,
     driver,
     fraud,
@@ -27,6 +35,9 @@ export default function Sidebar({
     requesting,
     rideError,
     ride,
+
+    onCancelRide,
+    cancelling,
 
 }) {
 
@@ -40,21 +51,19 @@ export default function Sidebar({
 
     };
 
-    const canRequest = pickup && destination && !requesting;
+    const rideIsActive = ride && ["REQUESTED", "ACCEPTED"].includes(ride.status);
+
+    const canRequest = pickup && destination && !requesting && !rideIsActive;
 
     return (
 
         <Paper
 
-            elevation={4}
-
             sx={{
 
-                height: "calc(100vh - 80px)",
+                height: "calc(100vh - 88px)",
 
                 p: 3,
-
-                borderRadius: 3,
 
                 display: "flex",
 
@@ -70,13 +79,13 @@ export default function Sidebar({
 
                 variant="h5"
 
-                fontWeight="bold"
+                fontWeight={700}
 
                 gutterBottom
 
             >
 
-                🚖 Ride Booking
+                Book a ride
 
             </Typography>
 
@@ -152,7 +161,7 @@ export default function Sidebar({
 
             </Box>
 
-            <Typography color="secondary" variant="caption" sx={{ mb: 3, display: "block" }}>
+            <Typography color="secondary" variant="caption" sx={{ mb: 2, display: "block" }}>
 
                 {formatLocation(destination)}
 
@@ -164,21 +173,49 @@ export default function Sidebar({
 
             </Typography>
 
+            {route && (
+
+                <Box
+                    sx={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        backgroundColor: "background.default",
+                        border: "1px solid",
+                        borderColor: "divider",
+                        borderRadius: 2,
+                        px: 2,
+                        py: 1.25,
+                        mb: 2,
+                    }}
+                >
+
+                    <Box>
+                        <Typography variant="caption" color="text.secondary">Distance</Typography>
+                        <Typography variant="subtitle2">{(route.distance / 1000).toFixed(2)} km</Typography>
+                    </Box>
+
+                    <Box>
+                        <Typography variant="caption" color="text.secondary">Route time</Typography>
+                        <Typography variant="subtitle2">{Math.round(route.duration / 60)} min</Typography>
+                    </Box>
+
+                </Box>
+
+            )}
+
             <Divider sx={{ mb: 3 }} />
 
             <Typography variant="subtitle2">
 
-                Estimated ETA
+                Estimated ETA (AI)
 
             </Typography>
 
-            <Typography variant="h6">
+            <Typography variant="h6" sx={{ mb: 2 }}>
 
                 {eta ? `${eta} min` : "--"}
 
             </Typography>
-
-            <Divider sx={{ my: 3 }} />
 
             <Typography variant="subtitle2">
 
@@ -192,23 +229,17 @@ export default function Sidebar({
 
                 (
 
-                    <Stack spacing={1}>
+                    <Stack spacing={0.5} sx={{ mb: 2 }}>
 
-                        <Typography>
+                        <Typography variant="body2">
 
-                            Driver #{driver.driver_id}
-
-                        </Typography>
-
-                        <Typography>
-
-                            ⭐ {driver.rating} ({driver.total_trips} trips)
+                            Driver #{driver.driver_id} · ⭐ {driver.rating} ({driver.total_trips} trips)
 
                         </Typography>
 
-                        <Typography>
+                        <Typography variant="body2" color="text.secondary">
 
-                            {driver.distance} km away
+                            {driver.distance} km away · match score {driver.score}
 
                         </Typography>
 
@@ -220,7 +251,7 @@ export default function Sidebar({
 
                 (
 
-                    <Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
 
                         No recommendation yet
 
@@ -230,59 +261,43 @@ export default function Sidebar({
 
             }
 
-            <Divider sx={{ my: 3 }} />
-
             <Typography variant="subtitle2">
 
                 Fraud Risk
 
             </Typography>
 
-            {
+            <Box sx={{ mb: 3 }}>
 
-                fraud ?
+                {
 
-                (
+                    fraud ?
 
-                    <Chip
+                    (
 
-                        label={fraud}
+                        <Chip
 
-                        color={
+                            label={fraud}
 
-                            fraud === "LOW"
+                            color={fraud === "LOW" ? "success" : "error"}
 
-                                ? "success"
+                            sx={{ mt: 1 }}
 
-                                : fraud === "MEDIUM"
+                        />
 
-                                ? "warning"
+                    )
 
-                                : "error"
+                    :
 
-                        }
+                    (
 
-                        sx={{ mt: 1 }}
+                        <Chip label="Unknown" sx={{ mt: 1 }} />
 
-                    />
+                    )
 
-                )
+                }
 
-                :
-
-                (
-
-                    <Chip
-
-                        label="Unknown"
-
-                        color="default"
-
-                    />
-
-                )
-
-            }
+            </Box>
 
             {
 
@@ -290,9 +305,28 @@ export default function Sidebar({
 
                 (
 
-                    <Alert severity="success" sx={{ mt: 3 }}>
+                    <Alert
+                        severity={rideIsActive ? "info" : "success"}
+                        sx={{ mb: 2 }}
+                        icon={false}
+                    >
 
-                        Ride #{ride.id} requested — status: {ride.status}, fare: ৳{ride.fare}
+                        <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between", mb: 0.5 }}>
+
+                            <Typography variant="subtitle2">Ride #{ride.id}</Typography>
+
+                            <Chip
+                                size="small"
+                                label={ride.status}
+                                color={STATUS_COLOR[ride.status] || "default"}
+                            />
+
+                        </Stack>
+
+                        <Typography variant="body2">
+                            ৳{ride.fare} · {ride.distance_km.toFixed(2)} km
+                            {ride.driver_id ? ` · driver #${ride.driver_id}` : " · finding a driver..."}
+                        </Typography>
 
                     </Alert>
 
@@ -306,7 +340,7 @@ export default function Sidebar({
 
                 (
 
-                    <Alert severity="error" sx={{ mt: 3 }}>
+                    <Alert severity="error" sx={{ mb: 2 }}>
 
                         {rideError}
 
@@ -316,29 +350,49 @@ export default function Sidebar({
 
             }
 
-            <Button
+            {rideIsActive ? (
 
-                variant="contained"
+                <Button
 
-                fullWidth
+                    variant="outlined"
 
-                disabled={!canRequest}
+                    color="error"
 
-                onClick={onRequestRide}
+                    fullWidth
 
-                sx={{
+                    disabled={cancelling}
 
-                    mt: "auto",
+                    onClick={onCancelRide}
 
-                    height: 50,
+                    sx={{ mt: "auto", height: 50 }}
 
-                }}
+                >
 
-            >
+                    {cancelling ? "Cancelling..." : "Cancel Ride"}
 
-                {requesting ? "Requesting..." : "Request Ride"}
+                </Button>
 
-            </Button>
+            ) : (
+
+                <Button
+
+                    variant="contained"
+
+                    fullWidth
+
+                    disabled={!canRequest}
+
+                    onClick={onRequestRide}
+
+                    sx={{ mt: "auto", height: 50 }}
+
+                >
+
+                    {requesting ? "Requesting..." : "Request Ride"}
+
+                </Button>
+
+            )}
 
         </Paper>
 

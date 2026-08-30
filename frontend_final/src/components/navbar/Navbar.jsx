@@ -6,16 +6,25 @@ import {
     Button,
     Stack,
     Avatar,
+    Box,
 
 } from "@mui/material";
 
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 
 import { getToken, logout } from "../../services/auth";
+
+const NAV_LINKS = [
+    { label: "Home", to: "/" },
+    { label: "Dashboard", to: "/dashboard" },
+    { label: "History", to: "/history" },
+    { label: "Driver", to: "/driver" },
+];
 
 export default function Navbar() {
 
     const navigate = useNavigate();
+    const location = useLocation();
 
     const isLoggedIn = Boolean(getToken());
 
@@ -29,9 +38,9 @@ export default function Navbar() {
 
     return (
 
-        <AppBar>
+        <AppBar position="fixed">
 
-            <Toolbar>
+            <Toolbar sx={{ gap: 1 }}>
 
                 <Typography
 
@@ -45,11 +54,17 @@ export default function Navbar() {
 
                         flexGrow: 1,
 
-                        fontWeight: 700,
+                        fontWeight: 800,
 
                         textDecoration: "none",
 
                         color: "inherit",
+
+                        display: "flex",
+
+                        alignItems: "center",
+
+                        gap: 1,
 
                     }}
 
@@ -63,53 +78,51 @@ export default function Navbar() {
 
                     direction="row"
 
-                    spacing={2}
+                    spacing={0.5}
 
-                    alignItems="center"
+                    sx={{ alignItems: "center" }}
 
                 >
 
-                    <Button
+                    {NAV_LINKS.map((link) => {
 
-                        color="inherit"
+                        const active = location.pathname === link.to;
 
-                        component={Link}
+                        return (
 
-                        to="/"
+                            <Button
 
-                    >
+                                key={link.to}
 
-                        Home
+                                component={Link}
 
-                    </Button>
+                                to={link.to}
 
-                    <Button
+                                sx={{
 
-                        color="inherit"
+                                    color: active ? "primary.main" : "text.secondary",
 
-                        component={Link}
+                                    backgroundColor: active ? "primary.light" : "transparent",
 
-                        to="/dashboard"
+                                    px: 1.5,
 
-                    >
+                                    "&:hover": {
+                                        backgroundColor: active ? "primary.light" : "action.hover",
+                                    },
 
-                        Dashboard
+                                }}
 
-                    </Button>
+                            >
 
-                    <Button
+                                {link.label}
 
-                        color="inherit"
+                            </Button>
 
-                        component={Link}
+                        );
 
-                        to="/history"
+                    })}
 
-                    >
-
-                        History
-
-                    </Button>
+                    <Box sx={{ width: 8 }} />
 
                     {
 
@@ -122,11 +135,12 @@ export default function Navbar() {
                                 <Button
                                     color="inherit"
                                     onClick={handleLogout}
+                                    sx={{ color: "text.secondary" }}
                                 >
                                     Logout
                                 </Button>
 
-                                <Avatar>
+                                <Avatar sx={{ width: 32, height: 32, bgcolor: "primary.main", fontSize: 14 }}>
 
                                     S
 
@@ -143,16 +157,15 @@ export default function Navbar() {
                             <>
 
                                 <Button
-                                    color="inherit"
                                     component={Link}
                                     to="/login"
+                                    sx={{ color: "text.secondary" }}
                                 >
                                     Login
                                 </Button>
 
                                 <Button
-                                    variant="outlined"
-                                    color="inherit"
+                                    variant="contained"
                                     component={Link}
                                     to="/register"
                                 >

@@ -124,7 +124,7 @@ export default function Chatbot() {
 
                     <Box sx={{ p: 2, backgroundColor: "primary.main" }}>
 
-                        <Typography variant="subtitle1" fontWeight="bold">
+                        <Typography variant="subtitle1" fontWeight="bold" sx={{ color: "primary.contrastText" }}>
                             SmartRideAI Assistant
                         </Typography>
 
@@ -158,6 +158,8 @@ export default function Chatbot() {
 
                                     backgroundColor: m.from === "user" ? "secondary.main" : "background.default",
 
+                                    color: m.from === "user" ? "secondary.contrastText" : "text.primary",
+
                                     px: 1.5,
 
                                     py: 1,
@@ -170,7 +172,7 @@ export default function Chatbot() {
 
                             >
 
-                                <Typography variant="body2">
+                                <Typography variant="body2" sx={{ color: "inherit" }}>
                                     {m.text}
                                 </Typography>
 

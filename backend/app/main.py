@@ -19,6 +19,9 @@ from app.api.fraud import (
 from app.api.chatbot import (
     router as chatbot_router,
 )
+from app.api.tracking import (
+    router as tracking_router,
+)
 
 
 # ------------------------
@@ -69,6 +72,9 @@ app.include_router(
 )
 app.include_router(
     chatbot_router
+)
+app.include_router(
+    tracking_router
 )
 
 # ------------------------

@@ -20,27 +20,37 @@ class ChatTools:
         )
 
     @staticmethod
-    def fraud():
+    def fraud(
+        trip_distance=8,
+        ride_duration=20,
+        fare=220,
+        driver_rating=4.8,
+        passenger_rating=4.7,
+        driver_cancel_rate=0.02,
+        passenger_cancel_rate=0.01,
+        rides_today=6,
+        gps_jump=0.1,
+    ):
 
         return predict_fraud(
 
-            trip_distance=8,
+            trip_distance=trip_distance,
 
-            ride_duration=20,
+            ride_duration=ride_duration,
 
-            fare=220,
+            fare=fare,
 
-            driver_rating=4.8,
+            driver_rating=driver_rating,
 
-            passenger_rating=4.7,
+            passenger_rating=passenger_rating,
 
-            driver_cancel_rate=0.02,
+            driver_cancel_rate=driver_cancel_rate,
 
-            passenger_cancel_rate=0.01,
+            passenger_cancel_rate=passenger_cancel_rate,
 
-            rides_today=6,
+            rides_today=rides_today,
 
-            gps_jump=0.1,
+            gps_jump=gps_jump,
 
         )
 

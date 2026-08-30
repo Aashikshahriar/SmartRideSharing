@@ -96,3 +96,23 @@ def accept_ride(
     update(db)
 
     return ride
+
+
+def complete_ride(db, ride):
+
+    ride.status = "COMPLETED"
+
+    ride.completed_at = datetime.utcnow()
+
+    update(db)
+
+    return ride
+
+
+def cancel_ride(db, ride):
+
+    ride.status = "CANCELLED"
+
+    update(db)
+
+    return ride

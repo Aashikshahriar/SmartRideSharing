@@ -14,6 +14,16 @@ def get_by_user_id(db: Session, user_id: int):
     return db.execute(stmt).scalar_one_or_none()
 
 
+def get_by_id(db: Session, driver_id: int):
+
+    stmt = (
+        select(Driver)
+        .where(Driver.id == driver_id)
+    )
+
+    return db.execute(stmt).scalar_one_or_none()
+
+
 def create(db: Session, driver: Driver):
 
     db.add(driver)

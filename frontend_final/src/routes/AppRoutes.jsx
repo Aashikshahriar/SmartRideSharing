@@ -5,6 +5,7 @@ import Login from "../pages/Login";
 import Register from "../pages/Register";
 import Dashboard from "../pages/Dashboard";
 import RideHistory from "../pages/RideHistory";
+import DriverPanel from "../pages/DriverPanel";
 
 import MainLayout from "../layouts/MainLayout";
 import ProtectedRoute from "./ProtectedRoute";
@@ -51,6 +52,17 @@ export default function AppRoutes() {
                     <ProtectedRoute>
                         <MainLayout>
                             <RideHistory />
+                        </MainLayout>
+                    </ProtectedRoute>
+                }
+            />
+
+            <Route
+                path="/driver"
+                element={
+                    <ProtectedRoute>
+                        <MainLayout>
+                            <DriverPanel />
                         </MainLayout>
                     </ProtectedRoute>
                 }

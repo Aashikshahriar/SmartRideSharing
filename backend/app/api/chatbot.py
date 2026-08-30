@@ -5,6 +5,8 @@ from sqlalchemy.orm import Session
 
 from app.database.dependency import get_db
 
+from app.services.current_user import get_current_user_optional
+
 from app.schemas.chatbot import (
 
     ChatRequest,
@@ -38,6 +40,8 @@ def chat(
 
     db: Session = Depends(get_db),
 
+    current_user=Depends(get_current_user_optional),
+
 ):
 
     answer = chatbot.chat(
@@ -45,6 +49,8 @@ def chat(
         request.message,
 
         db,
+
+        current_user,
 
     )
 

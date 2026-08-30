@@ -59,7 +59,23 @@ def get_active_ride(
     stmt = (
         select(Ride)
         .where(Ride.passenger_id == passenger_id)
-        .where(Ride.status == "REQUESTED")
+        .where(Ride.status.in_(["REQUESTED", "ACCEPTED"]))
+        .order_by(Ride.requested_at.desc())
     )
 
-    return db.execute(stmt).scalar_one_or_none()
+    return db.execute(stmt).scalars().first()
+
+
+def get_active_ride_for_driver(
+    db: Session,
+    driver_id: int,
+):
+
+    stmt = (
+        select(Ride)
+        .where(Ride.driver_id == driver_id)
+        .where(Ride.status == "ACCEPTED")
+        .order_by(Ride.accepted_at.desc())
+    )
+
+    return db.execute(stmt).scalars().first()

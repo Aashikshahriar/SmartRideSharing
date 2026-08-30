@@ -31,9 +31,39 @@ export async function getRideHistory() {
 
 }
 
+export async function getPendingRides() {
+
+    const response = await api.get(
+        "/rides/pending"
+    );
+
+    return response.data;
+
+}
+
+export async function getDriverActiveRide() {
+
+    const response = await api.get(
+        "/rides/driver/active"
+    );
+
+    return response.data;
+
+}
+
+export async function acceptRide(id) {
+
+    const response = await api.patch(
+        `/rides/${id}/accept`
+    );
+
+    return response.data;
+
+}
+
 export async function cancelRide(id) {
 
-    const response = await api.post(
+    const response = await api.patch(
         `/rides/${id}/cancel`
     );
 
@@ -43,7 +73,7 @@ export async function cancelRide(id) {
 
 export async function completeRide(id) {
 
-    const response = await api.post(
+    const response = await api.patch(
         `/rides/${id}/complete`
     );
 

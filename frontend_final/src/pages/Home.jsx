@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Grid from "@mui/material/Grid";
 
@@ -6,7 +6,10 @@ import Sidebar from "../components/sidebar/Sidebar";
 import MapView from "../components/map/MapView";
 
 import { getToken } from "../services/auth";
-import { requestRide } from "../services/ride";
+import { requestRide, getRide, cancelRide } from "../services/ride";
+import { connectRideTracking } from "../services/tracking";
+
+const ACTIVE_STATUSES = ["REQUESTED", "ACCEPTED"];
 
 export default function Home() {
 
@@ -24,6 +27,11 @@ export default function Home() {
     const [ride, setRide] = useState(null);
     const [rideError, setRideError] = useState("");
     const [requesting, setRequesting] = useState(false);
+    const [cancelling, setCancelling] = useState(false);
+
+    const [driverLocation, setDriverLocation] = useState(null);
+
+    const wsRef = useRef(null);
 
     async function handleRequestRide() {
 
@@ -40,6 +48,7 @@ export default function Home() {
         setRequesting(true);
         setRideError("");
         setRide(null);
+        setDriverLocation(null);
 
         try {
 
@@ -67,6 +76,96 @@ export default function Home() {
 
     }
 
+    async function handleCancelRide() {
+
+        if (!ride) return;
+
+        setCancelling(true);
+
+        try {
+
+            const data = await cancelRide(ride.id);
+
+            setRide(data);
+
+        } catch (err) {
+
+            setRideError(
+                err.response?.data?.detail ||
+                "Could not cancel the ride."
+            );
+
+        } finally {
+
+            setCancelling(false);
+
+        }
+
+    }
+
+    // Poll ride status while it's active, so we notice ACCEPTED/COMPLETED transitions
+    useEffect(() => {
+
+        if (!ride || !ACTIVE_STATUSES.includes(ride.status)) return;
+
+        let cancelled = false;
+
+        const interval = setInterval(async () => {
+
+            try {
+
+                const data = await getRide(ride.id);
+
+                if (!cancelled) setRide(data);
+
+            } catch {
+                // ignore transient poll failures
+            }
+
+        }, 4000);
+
+        return () => {
+            cancelled = true;
+            clearInterval(interval);
+        };
+
+    }, [ride?.id, ride?.status]);
+
+    // Live-track the assigned driver once a ride is on its way
+    useEffect(() => {
+
+        if (!ride || ride.status !== "ACCEPTED" || !ride.driver_id) {
+
+            if (wsRef.current) {
+                wsRef.current.close();
+                wsRef.current = null;
+            }
+
+            return;
+
+        }
+
+        const socket = connectRideTracking(ride.id);
+
+        wsRef.current = socket;
+
+        socket.onmessage = (event) => {
+
+            const data = JSON.parse(event.data);
+
+            if (data.type === "location") {
+                setDriverLocation({ lat: data.lat, lng: data.lng });
+            }
+
+        };
+
+        return () => {
+            socket.close();
+            if (wsRef.current === socket) wsRef.current = null;
+        };
+
+    }, [ride?.id, ride?.status, ride?.driver_id]);
+
     return (
 
         <Grid
@@ -81,6 +180,7 @@ export default function Home() {
 
                     pickup={pickup}
                     destination={destination}
+                    route={route}
                     eta={eta}
                     driver={driver}
                     fraud={fraud}
@@ -92,6 +192,9 @@ export default function Home() {
                     requesting={requesting}
                     rideError={rideError}
                     ride={ride}
+
+                    onCancelRide={handleCancelRide}
+                    cancelling={cancelling}
 
                 />
 
@@ -113,6 +216,8 @@ export default function Home() {
                     setEta={setEta}
                     setDriver={setDriver}
                     setFraud={setFraud}
+
+                    driverLocation={driverLocation}
 
                 />
 

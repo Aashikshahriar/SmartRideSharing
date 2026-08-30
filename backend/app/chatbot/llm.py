@@ -1,52 +1,52 @@
-import ollama
+from openai import OpenAI
+
+from app.core.config import settings
 
 
 class ChatLLM:
 
     def __init__(self):
 
-        self.model = "qwen3:8b"
-        # change if using llama3.2
+        self.enabled = bool(settings.CHATBOT_API_KEY)
 
-    def generate(
+        self.client = None
 
-        self,
+        if self.enabled:
 
-        system,
+            self.client = OpenAI(
+                api_key=settings.CHATBOT_API_KEY,
+                base_url=settings.CHATBOT_BASE_URL,
+            )
 
-        prompt,
+    def generate(self, system, prompt):
 
-    ):
+        if not self.enabled:
+
+            return (
+                "The free-text assistant isn't configured yet — set "
+                "CHATBOT_API_KEY in the backend .env file (see README for "
+                "free API key sources). I can still answer ETA, fraud, and "
+                "driver recommendation questions in the meantime."
+            )
 
         try:
 
-            response = ollama.chat(
+            response = self.client.chat.completions.create(
 
-                model=self.model,
+                model=settings.CHATBOT_MODEL,
 
                 messages=[
-
-                    {
-
-                        "role": "system",
-
-                        "content": system,
-
-                    },
-
-                    {
-
-                        "role": "user",
-
-                        "content": prompt,
-
-                    },
-
+                    {"role": "system", "content": system},
+                    {"role": "user", "content": prompt},
                 ],
+
+                temperature=0.4,
+
+                max_tokens=400,
 
             )
 
-            return response["message"]["content"]
+            return response.choices[0].message.content
 
         except Exception:
 

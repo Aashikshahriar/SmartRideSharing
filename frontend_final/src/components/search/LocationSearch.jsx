@@ -108,8 +108,10 @@ export default function LocationSearch({
 
                 onBlur={() => setTimeout(() => setOpen(false), 150)}
 
-                InputProps={{
-                    endAdornment: loading ? <CircularProgress size={16} /> : null,
+                slotProps={{
+                    input: {
+                        endAdornment: loading ? <CircularProgress size={16} /> : null,
+                    },
                 }}
 
             />

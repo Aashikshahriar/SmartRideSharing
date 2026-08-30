@@ -17,6 +17,12 @@ class RideResponse(BaseModel):
 
     driver_id: int | None
 
+    pickup_lat: float
+    pickup_lon: float
+
+    destination_lat: float
+    destination_lon: float
+
     distance_km: float
 
     estimated_duration: float

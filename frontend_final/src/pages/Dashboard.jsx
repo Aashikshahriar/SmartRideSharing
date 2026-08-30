@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 
 import {
     Typography,
@@ -7,6 +8,7 @@ import {
     Chip,
     Alert,
     CircularProgress,
+    Button,
 } from "@mui/material";
 
 import { getCurrentUser } from "../services/auth";
@@ -59,7 +61,7 @@ export default function Dashboard() {
 
             {user && (
 
-                <Paper sx={{ p: 3, mt: 2, maxWidth: 480, borderRadius: 3 }}>
+                <Paper sx={{ p: 3, mt: 2, maxWidth: 480 }}>
 
                     <Stack spacing={2}>
 
@@ -80,6 +82,32 @@ export default function Dashboard() {
                             color="primary"
                             sx={{ width: "fit-content", textTransform: "capitalize" }}
                         />
+
+                        {user.role !== "driver" && (
+
+                            <Button
+                                component={Link}
+                                to="/driver"
+                                variant="outlined"
+                                sx={{ width: "fit-content" }}
+                            >
+                                Become a driver
+                            </Button>
+
+                        )}
+
+                        {user.role === "driver" && (
+
+                            <Button
+                                component={Link}
+                                to="/driver"
+                                variant="outlined"
+                                sx={{ width: "fit-content" }}
+                            >
+                                Open Driver Panel
+                            </Button>
+
+                        )}
 
                     </Stack>
 

@@ -66,7 +66,6 @@ export default function Login() {
             <Paper
                 component="form"
                 onSubmit={handleSubmit}
-                elevation={4}
                 sx={{
                     p: 4,
                     width: "100%",

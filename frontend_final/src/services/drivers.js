@@ -1,41 +1,38 @@
-const drivers = [
+import api from "./api";
 
-    {
+export async function registerDriver(data) {
 
-        id:1,
+    const response = await api.post("/drivers/register", data);
 
-        name:"Ahmed",
+    return response.data;
 
-        rating:4.9,
+}
 
-        position:[23.8103,90.4125]
+export async function getMyDriverProfile() {
 
-    },
+    const response = await api.get("/drivers/me");
 
-    {
+    return response.data;
 
-        id:2,
+}
 
-        name:"Rahim",
+export async function setDriverOnlineStatus(isOnline) {
 
-        rating:4.8,
+    const response = await api.patch("/drivers/status", {
+        is_online: isOnline,
+    });
 
-        position:[23.8052,90.4187]
+    return response.data;
 
-    },
+}
 
-    {
+export async function updateDriverLocation(latitude, longitude) {
 
-        id:3,
+    const response = await api.patch("/drivers/location", {
+        latitude,
+        longitude,
+    });
 
-        name:"Karim",
+    return response.data;
 
-        rating:4.7,
-
-        position:[23.8161,90.4051]
-
-    }
-
-]
-
-export default drivers;
+}

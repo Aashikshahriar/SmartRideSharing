@@ -207,33 +207,91 @@ Status: Completed.
 ## AI Chatbot
 
 Current capabilities: - ETA queries - Driver recommendation - Fraud
-checking - General ride assistance
+checking - Contextual, free-text conversation - General ride
+assistance
 
 Architecture:
 
-    User
+    User (+ optional JWT)
      ↓
-    Chatbot
+    Chatbot Service
      ↓
-    Intent Detection
+    Context Builder (active ride, driver, user role)
      ↓
-    AI Tools
+    Keyword tools (ETA / fraud / recommendation) → fast, deterministic answers
+     ↓ (fallback for anything else)
+    LLM (any OpenAI-compatible endpoint) with a per-request contextual system prompt
      ↓
     Response
+
+The chatbot talks to any **OpenAI-compatible** chat-completions API via
+the `openai` Python SDK, configured purely through environment
+variables (`CHATBOT_API_KEY`, `CHATBOT_BASE_URL`, `CHATBOT_MODEL`) — no
+provider-specific code. That means Groq, OpenRouter, Together AI,
+DeepInfra, Google's OpenAI-compatible endpoint, or a local Ollama
+server all work by just changing those three values.
+
+### Setting up a free API key
+
+Pick one, sign up, and paste the key into `backend/.env` as
+`CHATBOT_API_KEY`:
+
+  Provider                              Free tier                         Base URL
+  -------------------------------------- ---------------------------------- --------------------------------------------------
+  **Groq** (recommended)                Generous free tier, very fast      `https://api.groq.com/openai/v1`
+  **OpenRouter**                        Several free models (`:free` tag)  `https://openrouter.ai/api/v1`
+  **Google Gemini** (OpenAI-compat)     Free tier via AI Studio            `https://generativelanguage.googleapis.com/v1beta/openai/`
+  **Ollama** (local, no key needed)     Unlimited, runs on your machine    `http://localhost:11434/v1` (any `CHATBOT_API_KEY` value works)
+
+For Groq: create a free account at console.groq.com, generate an API
+key, and check `client.models.list()` (or the console) for the current
+free model catalogue — model IDs change over time. This project
+defaults to `openai/gpt-oss-20b`.
+
+If `CHATBOT_API_KEY` is left blank, the chatbot degrades gracefully:
+the ETA / fraud / driver-recommendation quick-answers still work, and
+free-text questions get a friendly "not configured yet" message
+instead of an error.
 
 Backend completed.
 
 ------------------------------------------------------------------------
 
+# Live Tracking
+
+Once a driver accepts a ride, both sides open a WebSocket connection
+to `/ws/rides/{ride_id}?token=<jwt>`:
+
+    Driver app  ──(lat, lng every few seconds)──▶  /ws/rides/{id}  ──▶  Passenger app
+
+-   The driver's browser streams its location via the Geolocation API
+    (`watchPosition`), or falls back to a simulated straight-line
+    movement from pickup to destination if location access isn't
+    available (useful for demos on a desktop browser).
+-   The server persists the latest position on the driver's record and
+    broadcasts it to everyone else connected to that ride.
+-   The passenger's map shows a live 🚗 marker that updates in
+    real time.
+-   Ride status changes (accepted / completed / cancelled) are picked
+    up via lightweight REST polling (every few seconds) rather than
+    the socket, keeping the real-time channel dedicated to location
+    only.
+
+------------------------------------------------------------------------
+
 # Frontend
 
-Current framework: - React - Vite - Material UI
+Current framework: - React - Vite - Material UI (v9, light theme,
+Inter typeface)
 
-Pages: - Home - Login - Register - Dashboard - Ride History
+Pages: - Home (ride booking + live map) - Login - Register (rider or
+driver signup) - Dashboard - Ride History - Driver Panel
 
-Components: - Navbar - Sidebar - MapView
+Components: - Navbar - Sidebar - MapView - LocationSearch (address
+autocomplete) - Chatbot (floating assistant widget)
 
-Status: Under active development.
+Status: Functional end-to-end (auth → book a ride → live tracking →
+history) for both riders and drivers.
 
 ------------------------------------------------------------------------
 
@@ -243,33 +301,44 @@ Status: Under active development.
 
 -   POST /auth/register
 -   POST /auth/login
+-   GET /users/me
 
 ## Drivers
 
--   GET
--   POST
--   PUT
--   DELETE
+-   POST /drivers/register
+-   GET /drivers/me
+-   PATCH /drivers/status
+-   PATCH /drivers/location
 
 ## Vehicles
 
--   GET
--   POST
--   PUT
--   DELETE
+-   POST /vehicles
+-   GET /vehicles/me
+-   PUT /vehicles
+-   DELETE /vehicles
 
 ## Rides
 
 -   POST /rides/request
--   POST /rides/cancel
--   POST /rides/complete
+-   GET /rides/history
+-   GET /rides/active
+-   GET /rides/pending (driver)
+-   GET /rides/driver/active (driver)
+-   GET /rides/{ride_id}
+-   PATCH /rides/{ride_id}/accept (driver)
+-   PATCH /rides/{ride_id}/complete (driver)
+-   PATCH /rides/{ride_id}/cancel (passenger)
+
+## Live Tracking
+
+-   WS /ws/rides/{ride_id}?token=\<jwt\>
 
 ## AI
 
 -   POST /ai/eta
--   POST /recommendation
--   POST /fraud
--   POST /chatbot
+-   POST /recommendation/driver
+-   POST /fraud/check
+-   POST /chatbot/chat
 
 ------------------------------------------------------------------------
 
@@ -327,13 +396,14 @@ Frontend:
   ETA Prediction                 ✅
   Driver Recommendation          ✅
   Fraud Detection                ✅
-  AI Chatbot Backend             ✅
+  AI Chatbot (contextual, LLM)   ✅
   React Setup                    ✅
   Material UI                    ✅
-  OpenStreetMap                  🟡
-  Route Drawing                  🟡
-  Frontend-Backend Integration   🟡
-  Live Tracking                  ❌
+  OpenStreetMap                  ✅
+  Route Drawing                  ✅
+  Frontend-Backend Integration   ✅
+  Live Tracking (WebSocket)      ✅
+  Driver Panel (onboard/accept)  ✅
   Payments                       ❌
 
 ------------------------------------------------------------------------
@@ -350,11 +420,10 @@ Frontend:
 
 ## Frontend
 
--   Live ride tracking
--   Interactive routing
 -   Responsive mobile UI
 -   Progressive Web App
--   Dark/Light mode
+-   Vehicle registration UI for drivers
+-   Ride cancellation reasons / ratings after a completed ride
 
 ## Backend
 
@@ -377,7 +446,7 @@ Frontend:
 
 -   Microservices
 -   RabbitMQ/Kafka
--   WebSockets
+-   Redis pub/sub for multi-instance WebSocket fan-out
 -   Cloud deployment
 -   CI/CD
 
@@ -399,19 +468,19 @@ Frontend:
 -   Fraud Detection
 -   Chatbot Backend
 
-## Phase 3 🟡
+## Phase 3 ✅
 
 -   React Frontend
 -   Material UI
 -   Map Integration
 -   Backend Integration
 
-## Phase 4
+## Phase 4 🟡
 
--   Real-time Tracking
+-   Real-time Tracking ✅
+-   Driver Dashboard ✅
 -   Notifications
 -   Payments
--   Driver Dashboard
 
 ## Phase 5
 
@@ -424,9 +493,10 @@ Frontend:
 # Conclusion
 
 SmartRideAI is a modular AI-powered ride-sharing platform combining
-modern web development with practical machine learning. The backend is
-largely complete and supports authentication, ride management, and
-multiple AI services. The frontend foundation has been established and
-is being integrated with the backend. The architecture is designed for
-future expansion toward production-scale intelligent transportation
-systems.
+modern web development with practical machine learning. The backend
+and frontend are fully integrated end-to-end: riders and drivers can
+register, book or accept rides, see each other's live location on the
+map, get an AI-predicted ETA and driver recommendation, run a
+fraud-risk check, and talk to a context-aware chatbot. The architecture
+is designed for future expansion toward production-scale intelligent
+transportation systems.

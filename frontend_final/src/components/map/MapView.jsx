@@ -8,9 +8,18 @@ import {
     useMap,
 } from "react-leaflet";
 
+import L from "leaflet";
+
 import { Paper } from "@mui/material";
 
 import { useEffect } from "react";
+
+const carIcon = L.divIcon({
+    html: '<div style="font-size:22px;line-height:28px;text-align:center;filter:drop-shadow(0 1px 2px rgba(0,0,0,0.5))">🚗</div>',
+    className: "driver-marker-icon",
+    iconSize: [28, 28],
+    iconAnchor: [14, 14],
+});
 
 import { getRoute } from "../../services/routing";
 import { predictEta } from "../../services/eta";
@@ -96,6 +105,8 @@ export default function MapView({
     setEta,
     setDriver,
     setFraud,
+
+    driverLocation,
 
 }) {
 
@@ -217,7 +228,7 @@ export default function MapView({
 
             sx={{
 
-                height: "calc(100vh - 80px)",
+                height: "calc(100vh - 88px)",
 
                 width: "100%",
                 borderRadius: 3,
@@ -312,11 +323,27 @@ export default function MapView({
 
                         positions={route.coordinates}
 
-                        color="blue"
+                        color="#2563EB"
 
                         weight={5}
 
                     />
+
+                }
+
+                {
+
+                    driverLocation &&
+
+                    <Marker position={driverLocation} icon={carIcon}>
+
+                        <Popup>
+
+                            Your driver
+
+                        </Popup>
+
+                    </Marker>
 
                 }
 
